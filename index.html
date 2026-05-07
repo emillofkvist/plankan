@@ -309,6 +309,7 @@
     <script>
         const RADIUS = 58;
         const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+        const PAUSE_DURATION = 30;
 
         let activeIndex = null;
 
@@ -316,6 +317,11 @@
             { state: 'idle', interval: null, delayTimeout: null },
             { state: 'idle', interval: null, delayTimeout: null },
             { state: 'idle', interval: null, delayTimeout: null },
+        ];
+
+        const pauses = [
+            { interval: null },
+            { interval: null },
         ];
 
         function getDuration() {
@@ -339,6 +345,62 @@
                     osc.stop(ctx.currentTime + delay + 0.3);
                 });
             } catch (e) {}
+        }
+
+        function formatTime(s) {
+            return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+        }
+
+        function stopPause(pauseIndex) {
+            const p = pauses[pauseIndex];
+            if (p.interval) { clearInterval(p.interval); p.interval = null; }
+            const banner = document.getElementById(`pause-${pauseIndex}`);
+            const text = document.getElementById(`pause-text-${pauseIndex}`);
+            const fill = document.getElementById(`pause-fill-${pauseIndex}`);
+            if (banner) {
+                banner.dataset.state = 'waiting';
+                text.textContent = `Paus ${formatTime(PAUSE_DURATION)}`;
+                fill.style.transition = 'none';
+                fill.style.width = '100%';
+            }
+        }
+
+        function startPause(pauseIndex) {
+            const p = pauses[pauseIndex];
+            const banner = document.getElementById(`pause-${pauseIndex}`);
+            const text = document.getElementById(`pause-text-${pauseIndex}`);
+            const fill = document.getElementById(`pause-fill-${pauseIndex}`);
+
+            let remaining = PAUSE_DURATION;
+            banner.dataset.state = 'active';
+            text.textContent = `Paus ${formatTime(remaining)}`;
+            fill.style.transition = 'none';
+            fill.style.width = '100%';
+
+            setTimeout(() => {
+                fill.style.transition = `width ${PAUSE_DURATION}s linear`;
+                fill.style.width = '0%';
+            }, 50);
+
+            p.interval = setInterval(() => {
+                remaining--;
+                text.textContent = `Paus ${formatTime(remaining)}`;
+
+                if (remaining <= 0) {
+                    clearInterval(p.interval);
+                    p.interval = null;
+                    banner.dataset.state = 'done';
+
+                    const nextIndex = pauseIndex + 1;
+                    if (document.getElementById('autostart').checked) {
+                        startTimer(nextIndex);
+                    } else {
+                        const btn = document.getElementById(`btn-${nextIndex}`);
+                        btn.disabled = false;
+                        btn.textContent = 'Starta';
+                    }
+                }
+            }, 1000);
         }
 
         function setRing(index, remaining, total) {
@@ -379,6 +441,10 @@
 
         function startTimer(index) {
             if (timers[index].state === 'done') return;
+
+            for (let i = 0; i < pauses.length; i++) {
+                if (pauses[i].interval) stopPause(i);
+            }
 
             // Stop whatever is currently running
             if (activeIndex !== null && activeIndex !== index) {
@@ -436,6 +502,10 @@
                         btn.disabled = true;
 
                         playBeep();
+
+                        if (index < 2) {
+                            startPause(index);
+                        }
                     } else {
                         setRing(index, remaining, duration);
                         text.textContent = remaining;
@@ -490,6 +560,9 @@
         }
 
         document.getElementById('duration').addEventListener('change', () => {
+            for (let i = 0; i < 2; i++) {
+                stopPause(i);
+            }
             for (let i = 0; i < 3; i++) {
                 if (timers[i].state !== 'done') {
                     stopTimer(i, true);
