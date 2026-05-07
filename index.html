@@ -233,6 +233,49 @@
             background: #222;
             color: #5ede80;
         }
+
+        .pause-banner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 24px;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+        }
+
+        .pause-banner[data-state="active"] {
+            opacity: 1;
+        }
+
+        .pause-banner[data-state="done"] {
+            opacity: 0.15;
+        }
+
+        .pause-text {
+            font-size: 0.7rem;
+            color: #888;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .pause-banner[data-state="active"] .pause-text {
+            color: #5ede80;
+        }
+
+        .pause-bar {
+            width: 100%;
+            height: 3px;
+            background: #252525;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .pause-bar-fill {
+            height: 100%;
+            background: #5ede80;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -409,7 +452,7 @@
             card.innerHTML = `
                 <div class="set-label">Set ${index + 1}</div>
                 <div class="ring-container">
-                    <svg class="ring-svg" width="150" height="150" viewBox="0 0 130 130">
+                    <svg class="ring-svg" width="100" height="100" viewBox="0 0 130 130">
                         <circle class="ring-bg" cx="65" cy="65" r="${RADIUS}" />
                         <circle class="ring-progress" id="ring-${index}"
                             cx="65" cy="65" r="${RADIUS}"
@@ -424,10 +467,25 @@
             return card;
         }
 
+        function buildPauseBanner(pauseIndex) {
+            const banner = document.createElement('div');
+            banner.className = 'pause-banner';
+            banner.id = `pause-${pauseIndex}`;
+            banner.dataset.state = 'waiting';
+            banner.innerHTML = `
+                <span class="pause-text" id="pause-text-${pauseIndex}">Paus 0:30</span>
+                <div class="pause-bar"><div class="pause-bar-fill" id="pause-fill-${pauseIndex}"></div></div>
+            `;
+            return banner;
+        }
+
         function init() {
             const container = document.getElementById('timers');
             for (let i = 0; i < 3; i++) {
                 container.appendChild(buildTimer(i));
+                if (i < 2) {
+                    container.appendChild(buildPauseBanner(i));
+                }
             }
         }
 
