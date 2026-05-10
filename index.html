@@ -297,6 +297,14 @@
                 <option value="60">60 s</option>
             </select>
         </div>
+        <div class="dropdown-wrapper">
+            <label for="pause-duration">Paus</label>
+            <select id="pause-duration">
+                <option value="10">10 s</option>
+                <option value="20" selected>20 s</option>
+                <option value="30">30 s</option>
+            </select>
+        </div>
         <label class="toggle-wrapper">
             Autostart
             <input type="checkbox" class="toggle-input" id="autostart" checked>
@@ -309,7 +317,9 @@
     <script>
         const RADIUS = 58;
         const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-        const PAUSE_DURATION = 30;
+        function getPauseDuration() {
+            return parseInt(document.getElementById('pause-duration').value);
+        }
 
         let activeIndex = null;
 
@@ -359,7 +369,7 @@
             const fill = document.getElementById(`pause-fill-${pauseIndex}`);
             if (banner) {
                 banner.dataset.state = 'waiting';
-                text.textContent = `Paus ${formatTime(PAUSE_DURATION)}`;
+                text.textContent = `Paus ${formatTime(getPauseDuration())}`;
                 fill.style.transition = 'none';
                 fill.style.width = '100%';
             }
@@ -371,14 +381,15 @@
             const text = document.getElementById(`pause-text-${pauseIndex}`);
             const fill = document.getElementById(`pause-fill-${pauseIndex}`);
 
-            let remaining = PAUSE_DURATION;
+            const pauseDuration = getPauseDuration();
+            let remaining = pauseDuration;
             banner.dataset.state = 'active';
             text.textContent = `Paus ${formatTime(remaining)}`;
             fill.style.transition = 'none';
             fill.style.width = '100%';
 
             setTimeout(() => {
-                fill.style.transition = `width ${PAUSE_DURATION}s linear`;
+                fill.style.transition = `width ${pauseDuration}s linear`;
                 fill.style.width = '0%';
             }, 50);
 
@@ -543,7 +554,7 @@
             banner.id = `pause-${pauseIndex}`;
             banner.dataset.state = 'waiting';
             banner.innerHTML = `
-                <span class="pause-text" id="pause-text-${pauseIndex}">Paus 0:30</span>
+                <span class="pause-text" id="pause-text-${pauseIndex}">Paus ${formatTime(getPauseDuration())}</span>
                 <div class="pause-bar"><div class="pause-bar-fill" id="pause-fill-${pauseIndex}"></div></div>
             `;
             return banner;
@@ -558,6 +569,12 @@
                 }
             }
         }
+
+        document.getElementById('pause-duration').addEventListener('change', () => {
+            for (let i = 0; i < 2; i++) {
+                stopPause(i);
+            }
+        });
 
         document.getElementById('duration').addEventListener('change', () => {
             for (let i = 0; i < 2; i++) {
