@@ -276,6 +276,36 @@
             background: #5ede80;
             width: 100%;
         }
+
+        .completion-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 17, 17, 0.95);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            cursor: pointer;
+        }
+
+        .completion-overlay.visible {
+            display: flex;
+        }
+
+        .completion-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .completion-subtitle {
+            font-size: 1.5rem;
+            color: #888;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
@@ -313,6 +343,10 @@
     </div>
 
     <div class="timers" id="timers"></div>
+    <div class="completion-overlay" id="completion-overlay">
+        <div class="completion-title">Klar!</div>
+        <div class="completion-subtitle">Bra jobbat!</div>
+    </div>
 
     <script>
         const RADIUS = 58;
@@ -450,6 +484,22 @@
             if (activeIndex === index) activeIndex = null;
         }
 
+        function resetAll() {
+            for (let i = 0; i < 2; i++) stopPause(i);
+            for (let i = 0; i < 3; i++) {
+                const t = timers[i];
+                if (t.delayTimeout) { clearTimeout(t.delayTimeout); t.delayTimeout = null; }
+                if (t.interval) { clearInterval(t.interval); t.interval = null; }
+                t.state = 'idle';
+                resetTimerUI(i);
+            }
+            activeIndex = null;
+        }
+
+        function showCompletionOverlay() {
+            document.getElementById('completion-overlay').classList.add('visible');
+        }
+
         function startTimer(index) {
             if (timers[index].state === 'done') return;
 
@@ -516,6 +566,8 @@
 
                         if (index < 2) {
                             startPause(index);
+                        } else {
+                            showCompletionOverlay();
                         }
                     } else {
                         setRing(index, remaining, duration);
@@ -568,6 +620,10 @@
                     container.appendChild(buildPauseBanner(i));
                 }
             }
+            document.getElementById('completion-overlay').addEventListener('click', () => {
+                document.getElementById('completion-overlay').classList.remove('visible');
+                resetAll();
+            });
         }
 
         document.getElementById('pause-duration').addEventListener('change', () => {
